@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.oscar.monroy.todoapp.addtasks.domain.AddTaskUseCase
 import com.oscar.monroy.todoapp.addtasks.domain.GetTasksUseCase
+import com.oscar.monroy.todoapp.addtasks.domain.UpdateTaskUseCase
 import com.oscar.monroy.todoapp.addtasks.ui.TasksUIState.*
 import com.oscar.monroy.todoapp.addtasks.ui.model.TaskModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -19,22 +20,23 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class TaskViewModel @Inject constructor(private val addTaskUseCase: AddTaskUseCase, getTasksUseCase: GetTasksUseCase):ViewModel() {
+class TaskViewModel @Inject constructor(
+    private val addTaskUseCase: AddTaskUseCase,
+    private val updateTaskUseCase: UpdateTaskUseCase,
+    getTasksUseCase: GetTasksUseCase
+) : ViewModel() {
     val uiState: StateFlow<TasksUIState> = getTasksUseCase().map(::Success)
-        .catch{ Error(it) }
+        .catch { Error(it) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
 
     private val _showDialog = MutableLiveData<Boolean>()
     val showDialog: LiveData<Boolean> = _showDialog
 
-    //private val _tasks = mutableStateListOf<TaskModel>()
-    //val tasks: List<TaskModel> = _tasks
-
     fun onDismissDialog() {
         _showDialog.value = false
     }
 
-    fun onTaskCreated(task: String){
+    fun onTaskCreated(task: String) {
         onDismissDialog()
         viewModelScope.launch {
             addTaskUseCase(TaskModel(task = task))
@@ -46,10 +48,9 @@ class TaskViewModel @Inject constructor(private val addTaskUseCase: AddTaskUseCa
     }
 
     fun onCheckboxSelected(taskModel: TaskModel) {
-        //val index = _tasks.indexOf(taskModel)
-        //_tasks[index] = _tasks[index].let {
-          //  it.copy(selected = !it.selected)
-        //}
+        viewModelScope.launch {
+            updateTaskUseCase(taskModel.copy(selected = !taskModel.selected))
+        }
     }
 
     fun onRemoveItem(taskModel: TaskModel) {
