@@ -6,6 +6,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.oscar.monroy.todoapp.addtasks.domain.AddTaskUseCase
+import com.oscar.monroy.todoapp.addtasks.domain.DeleteTaskUseCase
 import com.oscar.monroy.todoapp.addtasks.domain.GetTasksUseCase
 import com.oscar.monroy.todoapp.addtasks.domain.UpdateTaskUseCase
 import com.oscar.monroy.todoapp.addtasks.ui.TasksUIState.*
@@ -23,6 +24,7 @@ import javax.inject.Inject
 class TaskViewModel @Inject constructor(
     private val addTaskUseCase: AddTaskUseCase,
     private val updateTaskUseCase: UpdateTaskUseCase,
+    private val deleteTaskUseCase: DeleteTaskUseCase,
     getTasksUseCase: GetTasksUseCase
 ) : ViewModel() {
     val uiState: StateFlow<TasksUIState> = getTasksUseCase().map(::Success)
@@ -54,7 +56,8 @@ class TaskViewModel @Inject constructor(
     }
 
     fun onRemoveItem(taskModel: TaskModel) {
-        //val task = _tasks.find { it.id == taskModel.id }
-        //_tasks.remove(task)
+        viewModelScope.launch {
+            deleteTaskUseCase(taskModel)
+        }
     }
 }
